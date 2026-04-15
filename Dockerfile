@@ -18,6 +18,7 @@ RUN apt-get update && \
     libjpeg-dev \
     libnetcdf-dev \
     libglpk-dev \
+    libgsl-dev \
     libharfbuzz-dev \
     libfribidi-dev \
     libfreetype6-dev \
@@ -42,31 +43,54 @@ RUN apt-get update && \
 RUN R -e "install.packages(c('BiocManager', 'devtools', 'remotes', 'R.utils'), repos='https://cloud.r-project.org')"
 
 # CRAN packages - general utilities and plotting
-RUN R -e "install.packages(c('tidyverse', 'readr', 'stringi', 'stringr', 'janitor', 'data.table','ggrepel', 'RColorBrewer', 'viridis', 'cowplot', 'patchwork', \
-'gridExtra', 'UpSetR', 'plotmics', 'pheatmap', 'circlize','EnhancedVolcano'), repos='https://cloud.r-project.org')"
+RUN R -e "install.packages(c( \
+    'tidyverse', 'readr', 'stringi', 'stringr', 'janitor', 'data.table', \
+    'ggrepel', 'RColorBrewer', 'viridis', 'cowplot', 'patchwork', \
+    'gridExtra', 'UpSetR', 'plotmics', 'pheatmap', 'circlize', \
+    'EnhancedVolcano' \
+    ), repos='https://cloud.r-project.org')"
 
 # CRAN packages - single-cell ecosystem
-RUN R -e "install.packages(c('Seurat', 'SeuratObject', 'Signac', 'harmony'), repos='https://cloud.r-project.org')"
+RUN R -e "install.packages(c( \
+    'Seurat', 'SeuratObject', 'Signac', 'harmony' \
+    ), repos='https://cloud.r-project.org')"
 
-# Fragile CRAN package
-RUN R -e "install.packages('gghalves', repos='https://cloud.r-project.org')"
-
-# GitHub packages installed one by one for easier debugging
+# GitHub / fragile packages installed separately
+RUN R -e "remotes::install_github('erocoar/gghalves')"
 RUN R -e "remotes::install_github('immunogenomics/presto')"
 RUN R -e "devtools::install_github('hhoeflin/hdf5r')"
 RUN R -e "devtools::install_github('constantAmateur/SoupX')"
 RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
-RUN R -e "remotes::install_github('BorchLab/scRepertoire')"
 RUN R -e "devtools::install_github('satijalab/seurat-wrappers')"
 
-# Bioconductor core + bulk + most single-cell packages
-RUN R -e "BiocManager::install(c('BiocGenerics', 'SummarizedExperiment', 'SingleCellExperiment','GenomicRanges', 'IRanges', 'rtracklayer', 'Biostrings', 'BSgenome', \
-    'edgeR', 'limma', 'sva', 'tidybulk','scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle','fgsea', 'enrichplot', 'DOSE', 'clusterProfiler', \
-    'org.Hs.eg.db', 'org.Mm.eg.db','TxDb.Hsapiens.UCSC.hg18.knownGene','TxDb.Mmusculus.UCSC.mm10.knownGene','ComplexHeatmap', 'InteractiveComplexHeatmap', \
-    'ChIPseeker', 'ChIPpeakAnno'), ask = FALSE, update = FALSE)"
+# scRepertoire requirements
+RUN R -e "install.packages('gsl', repos='https://cloud.r-project.org')"
+RUN R -e "remotes::install_github('BorchLab/scRepertoire')"
 
-# Bioconductor fragile packages installed separately
-RUN R -e "BiocManager::install(c('scDblFinder', 'muscat', 'TFBSTools'), ask = FALSE, update = FALSE)"
+# Bioconductor core + bulk + most single-cell packages
+RUN R -e "BiocManager::install(c( \
+    'BiocGenerics', 'SummarizedExperiment', 'SingleCellExperiment', \
+    'GenomicRanges', 'IRanges', 'rtracklayer', 'Biostrings', 'BSgenome', \
+    'edgeR', 'limma', 'sva', 'tidybulk', \
+    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', \
+    'fgsea', 'enrichplot', 'DOSE', 'clusterProfiler', \
+    'org.Hs.eg.db', 'org.Mm.eg.db', \
+    'TxDb.Hsapiens.UCSC.hg18.knownGene', \
+    'TxDb.Mmusculus.UCSC.mm10.knownGene', \
+    'ComplexHeatmap', 'InteractiveComplexHeatmap', \
+    'ChIPseeker', 'ChIPpeakAnno' \
+    ), ask = FALSE, update = FALSE)"
+
+# Fragile Bioconductor packages installed separately
+RUN R -e "BiocManager::install('scDblFinder', ask = FALSE, update = FALSE)"
+
+# muscat path
+RUN R -e "install.packages('lme4', repos='https://cloud.r-project.org')"
+RUN R -e "BiocManager::install('variancePartition', ask = FALSE, update = FALSE)"
+RUN R -e "BiocManager::install('muscat', ask = FALSE, update = FALSE)"
+
+# TFBSTools separately
+RUN R -e "BiocManager::install('TFBSTools', ask = FALSE, update = FALSE)"
 
 # Create RStudio user
 RUN useradd -m -s /bin/bash rstudio_user && \
