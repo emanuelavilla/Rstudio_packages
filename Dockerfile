@@ -48,14 +48,16 @@ RUN R -e "install.packages(c('tidyverse', 'readr', 'stringi', 'stringr', 'janito
 # CRAN packages - single-cell ecosystem
 RUN R -e "install.packages(c('Seurat', 'SeuratObject', 'Signac', 'harmony'), repos='https://cloud.r-project.org')"
 
-# Fragile CRAN / GitHub packages installed separately
-RUN R -e "install.packages('gghalves', repos='https://cloud.r-project.org')" && \
-    R -e "remotes::install_github('immunogenomics/presto')" && \
-    R -e "devtools::install_github('hhoeflin/hdf5r')" && \
-    R -e "devtools::install_github('constantAmateur/SoupX')" && \
-    R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')" && \
-    R -e "remotes::install_github('BorchLab/scRepertoire')" && \
-    R -e "devtools::install_github('satijalab/seurat-wrappers')"
+# Fragile CRAN package
+RUN R -e "install.packages('gghalves', repos='https://cloud.r-project.org')"
+
+# GitHub packages installed one by one for easier debugging
+RUN R -e "remotes::install_github('immunogenomics/presto')"
+RUN R -e "devtools::install_github('hhoeflin/hdf5r')"
+RUN R -e "devtools::install_github('constantAmateur/SoupX')"
+RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
+RUN R -e "remotes::install_github('BorchLab/scRepertoire')"
+RUN R -e "devtools::install_github('satijalab/seurat-wrappers')"
 
 # Bioconductor core + bulk + most single-cell packages
 RUN R -e "BiocManager::install(c('BiocGenerics', 'SummarizedExperiment', 'SingleCellExperiment','GenomicRanges', 'IRanges', 'rtracklayer', 'Biostrings', 'BSgenome', \
