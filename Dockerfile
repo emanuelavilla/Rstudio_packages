@@ -45,6 +45,7 @@ RUN R -e "install.packages(c('BiocManager', 'devtools', 'remotes', 'R.utils'), r
 # CRAN packages - general utilities and plotting
 RUN R -e "install.packages(c( \
     'tidyverse', 'readr', 'stringi', 'stringr', 'janitor', 'data.table', \
+    'rlist', 'seqinr', 'spgs', \
     'ggrepel', 'RColorBrewer', 'viridis', 'cowplot', 'patchwork', \
     'gridExtra', 'UpSetR', 'plotmics', 'pheatmap', 'circlize', \
     'EnhancedVolcano' \
@@ -72,7 +73,7 @@ RUN R -e "BiocManager::install(c( \
     'BiocGenerics', 'SummarizedExperiment', 'SingleCellExperiment', \
     'GenomicRanges', 'IRanges', 'rtracklayer', 'Biostrings', 'BSgenome', \
     'edgeR', 'limma', 'sva', 'tidybulk', \
-    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', \
+    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', 'miQC', \
     'fgsea', 'enrichplot', 'DOSE', 'clusterProfiler', \
     'org.Hs.eg.db', 'org.Mm.eg.db', \
     'TxDb.Hsapiens.UCSC.hg18.knownGene', \
@@ -80,14 +81,6 @@ RUN R -e "BiocManager::install(c( \
     'ComplexHeatmap', 'InteractiveComplexHeatmap', \
     'ChIPseeker', 'ChIPpeakAnno' \
     ), ask = FALSE, update = FALSE)"
-
-# Fragile Bioconductor packages installed separately
-RUN R -e "BiocManager::install('scDblFinder', ask = FALSE, update = FALSE)"
-
-# muscat path
-RUN R -e "install.packages('lme4', repos='https://cloud.r-project.org')"
-RUN R -e "BiocManager::install('variancePartition', ask = FALSE, update = FALSE)"
-RUN R -e "BiocManager::install('muscat', ask = FALSE, update = FALSE)"
 
 # TFBSTools separately
 RUN R -e "BiocManager::install('TFBSTools', ask = FALSE, update = FALSE)"
