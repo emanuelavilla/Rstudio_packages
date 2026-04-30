@@ -53,14 +53,12 @@ RUN R -e "install.packages(c( \
 
 # CRAN packages - single-cell ecosystem
 RUN R -e "install.packages(c( \
-    'Seurat', 'SeuratObject', 'Signac', 'harmony' \
+    'Seurat', 'SeuratObject', 'Signac', 'harmony', 'hdf5r' \
     ), repos='https://cloud.r-project.org')"
 
 # GitHub / fragile packages installed separately
 RUN R -e "remotes::install_github('erocoar/gghalves')"
 RUN R -e "remotes::install_github('immunogenomics/presto')"
-RUN R -e "install.packages('hdf5r', repos='https://cloud.r-project.org')"
-RUN R -e "install.packages('SoupX', repos='https://cloud.r-project.org')"
 RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
 
 # optional, do not block build
@@ -87,13 +85,15 @@ RUN R -e "BiocManager::install(c( \
 # TFBSTools separately
 RUN R -e "BiocManager::install('TFBSTools', ask = FALSE, update = FALSE)"
 
+# Force-check/install core packages needed for this image
+RUN R -e "install.packages(c('tidyverse', 'rlist', 'seqinr', 'spgs'), repos='https://cloud.r-project.org')"
+RUN R -e "remotes::install_github('immunogenomics/presto')"
+RUN R -e "BiocManager::install('miQC', ask = FALSE, update = FALSE)"
+
 # Create RStudio user
 RUN useradd -m -s /bin/bash rstudio_user && \
     echo 'rstudio_user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
     chown -R rstudio_user:rstudio_user /home/rstudio_user
 
-# Expose RStudio Server port
 EXPOSE 8787
-
-# Run as non-root user
 USER rstudio_user
