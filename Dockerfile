@@ -62,7 +62,9 @@ RUN R -e "remotes::install_github('immunogenomics/presto')"
 RUN R -e "install.packages('hdf5r', repos='https://cloud.r-project.org')"
 RUN R -e "install.packages('SoupX', repos='https://cloud.r-project.org')"
 RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
-RUN R -e "devtools::install_github('satijalab/seurat-wrappers')"
+
+# optional, do not block build
+RUN R -e "tryCatch(remotes::install_github('satijalab/seurat-wrappers', dependencies = FALSE), error = function(e) message('SeuratWrappers install failed: ', e$message))"
 
 # scRepertoire requirements
 RUN R -e "install.packages('gsl', repos='https://cloud.r-project.org')"
