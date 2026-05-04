@@ -82,7 +82,14 @@ RUN R -e "BiocManager::install(c( \
     'ChIPseeker', 'ChIPpeakAnno', 'BiocParallel' \
     ), ask = FALSE, update = FALSE)"
 
+# xgboost dependency for scDblFinder
+RUN R -e "install.packages('xgboost', repos='https://cloud.r-project.org')"
+
+# scDblFinder
 RUN R -e "BiocManager::install('scDblFinder', ask = FALSE, update = FALSE)"
+
+# final check: fail build if missing
+RUN R -e "library(scDblFinder); packageVersion('scDblFinder')"
 
 # TFBSTools separately
 RUN R -e "BiocManager::install('TFBSTools', ask = FALSE, update = FALSE)"
