@@ -79,7 +79,8 @@ RUN R -e "BiocManager::install(c( \
     'TxDb.Hsapiens.UCSC.hg18.knownGene', \
     'TxDb.Mmusculus.UCSC.mm10.knownGene', \
     'ComplexHeatmap', 'InteractiveComplexHeatmap', \
-    'ChIPseeker', 'ChIPpeakAnno' \
+    'ChIPseeker', 'ChIPpeakAnno', \
+    'scDblFinder', 'BiocParallel' \
     ), ask = FALSE, update = FALSE)"
 
 # TFBSTools separately
