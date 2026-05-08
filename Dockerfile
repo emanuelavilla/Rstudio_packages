@@ -40,46 +40,114 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Core installers
-RUN R -e "install.packages(c('BiocManager', 'devtools', 'remotes', 'R.utils'), repos='https://cloud.r-project.org')"
-
-# CRAN packages - general utilities and plotting
 RUN R -e "install.packages(c( \
-    'tidyverse', 'readr', 'stringi', 'stringr', 'janitor', 'data.table', \
-    'rlist', 'seqinr', 'spgs', \
-    'ggrepel', 'RColorBrewer', 'viridis', 'cowplot', 'patchwork', \
-    'gridExtra', 'UpSetR', 'plotmics', 'pheatmap', 'circlize', \
+    'BiocManager', \
+    'devtools', \
+    'remotes', \
+    'R.utils' \
+    ), repos='https://cloud.r-project.org')"
+
+# CRAN packages - utilities and plotting
+RUN R -e "install.packages(c( \
+    'tidyverse', \
+    'readr', \
+    'stringi', \
+    'stringr', \
+    'janitor', \
+    'data.table', \
+    'rlist', \
+    'seqinr', \
+    'spgs', \
+    'ggrepel', \
+    'RColorBrewer', \
+    'viridis', \
+    'cowplot', \
+    'patchwork', \
+    'gridExtra', \
+    'UpSetR', \
+    'plotmics', \
+    'pheatmap', \
+    'circlize', \
     'EnhancedVolcano' \
     ), repos='https://cloud.r-project.org')"
 
-# CRAN packages - single-cell ecosystem
+# Install Seurat ecosystem with pinned compatible versions
 RUN R -e "install.packages(c( \
-    'Seurat', 'SeuratObject', 'Signac', 'harmony', 'hdf5r' \
+    'Signac', \
+    'harmony', \
+    'hdf5r' \
     ), repos='https://cloud.r-project.org')"
 
-# GitHub / fragile packages installed separately
+RUN R -e "remotes::install_version( \
+    'SeuratObject', \
+    version = '5.4.0', \
+    repos = 'https://cloud.r-project.org' \
+    )"
+
+RUN R -e "remotes::install_version( \
+    'Seurat', \
+    version = '5.4.0', \
+    repos = 'https://cloud.r-project.org' \
+    )"
+
+# Verify Seurat installation
+RUN R -e "library(Seurat); library(SeuratObject); packageVersion('Seurat'); packageVersion('SeuratObject')"
+
+# GitHub / fragile packages
 RUN R -e "remotes::install_github('erocoar/gghalves')"
+
 RUN R -e "remotes::install_github('immunogenomics/presto')"
+
 RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
 
 # optional, do not block build
-RUN R -e "tryCatch(remotes::install_github('satijalab/seurat-wrappers', dependencies = FALSE), error = function(e) message('SeuratWrappers install failed: ', e$message))"
+RUN R -e "tryCatch( \
+    remotes::install_github( \
+    'satijalab/seurat-wrappers', \
+    dependencies = FALSE \
+    ), \
+    error = function(e) message('SeuratWrappers install failed: ', e$message) \
+    )"
 
 # scRepertoire requirements
 RUN R -e "install.packages('gsl', repos='https://cloud.r-project.org')"
+
 RUN R -e "remotes::install_github('BorchLab/scRepertoire')"
 
-# Bioconductor core + bulk + most single-cell packages
+# Bioconductor packages
 RUN R -e "BiocManager::install(c( \
-    'BiocGenerics', 'SummarizedExperiment', 'SingleCellExperiment', \
-    'GenomicRanges', 'IRanges', 'rtracklayer', 'Biostrings', 'BSgenome', \
-    'edgeR', 'limma', 'sva', 'tidybulk', \
-    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', 'miQC', \
-    'fgsea', 'enrichplot', 'DOSE', 'clusterProfiler', \
-    'org.Hs.eg.db', 'org.Mm.eg.db', \
+    'BiocGenerics', \
+    'SummarizedExperiment', \
+    'SingleCellExperiment', \
+    'GenomicRanges', \
+    'IRanges', \
+    'rtracklayer', \
+    'Biostrings', \
+    'BSgenome', \
+    'edgeR', \
+    'limma', \
+    'sva', \
+    'tidybulk', \
+    'scran', \
+    'scater', \
+    'slingshot', \
+    'monocle3', \
+    'miloR', \
+    'tricycle', \
+    'miQC', \
+    'fgsea', \
+    'enrichplot', \
+    'DOSE', \
+    'clusterProfiler', \
+    'org.Hs.eg.db', \
+    'org.Mm.eg.db', \
     'TxDb.Hsapiens.UCSC.hg18.knownGene', \
     'TxDb.Mmusculus.UCSC.mm10.knownGene', \
-    'ComplexHeatmap', 'InteractiveComplexHeatmap', \
-    'ChIPseeker', 'ChIPpeakAnno', 'BiocParallel' \
+    'ComplexHeatmap', \
+    'InteractiveComplexHeatmap', \
+    'ChIPseeker', \
+    'ChIPpeakAnno', \
+    'BiocParallel' \
     ), ask = FALSE, update = FALSE)"
 
 # xgboost dependency for scDblFinder
@@ -88,16 +156,29 @@ RUN R -e "install.packages('xgboost', repos='https://cloud.r-project.org')"
 # scDblFinder
 RUN R -e "BiocManager::install('scDblFinder', ask = FALSE, update = FALSE)"
 
-# final check: fail build if missing
+# Verify scDblFinder installation
 RUN R -e "library(scDblFinder); packageVersion('scDblFinder')"
 
-# TFBSTools separately
+# TFBSTools
 RUN R -e "BiocManager::install('TFBSTools', ask = FALSE, update = FALSE)"
 
-# Force-check/install core packages needed for this image
-RUN R -e "install.packages(c('tidyverse', 'rlist', 'seqinr', 'spgs'), repos='https://cloud.r-project.org')"
+# Force reinstall/check some important packages
+RUN R -e "install.packages(c( \
+    'tidyverse', \
+    'rlist', \
+    'seqinr', \
+    'spgs' \
+    ), repos='https://cloud.r-project.org')"
+
 RUN R -e "remotes::install_github('immunogenomics/presto')"
+
 RUN R -e "BiocManager::install('miQC', ask = FALSE, update = FALSE)"
+
+# Final compatibility check
+RUN R -e "library(Seurat); \
+    library(SeuratObject); \
+    stopifnot(as.character(packageVersion('Seurat')) == '5.4.0'); \
+    stopifnot(as.character(packageVersion('SeuratObject')) == '5.4.0')"
 
 # Create RStudio user
 RUN useradd -m -s /bin/bash rstudio_user && \
@@ -105,4 +186,5 @@ RUN useradd -m -s /bin/bash rstudio_user && \
     chown -R rstudio_user:rstudio_user /home/rstudio_user
 
 EXPOSE 8787
+
 USER rstudio_user
