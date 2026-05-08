@@ -1,6 +1,12 @@
 # Base image: RStudio + R 4.5.0
 FROM rocker/rstudio:4.5.0
 
+ENV MAKEFLAGS="-j1"
+ENV CXXFLAGS="-O2"
+ENV CXX11FLAGS="-O2"
+ENV CXX14FLAGS="-O2"
+ENV CXX17FLAGS="-O2"
+
 # System dependencies
 RUN apt-get update && \
     apt-get install -y \
@@ -36,16 +42,28 @@ RUN apt-get update && \
     gcc \
     g++ \
     git \
-    patch && \
+    patch \
+    sudo && \
     rm -rf /var/lib/apt/lists/*
 
 # Core installers
-RUN R -e "install.packages(c( \
-    'BiocManager', \
-    'devtools', \
-    'remotes', \
-    'R.utils' \
-    ), repos='https://cloud.r-project.org')"
+RUN R -e "install.packages(c('BiocManager','devtools','remotes','R.utils'), repos='https://cloud.r-project.org')"
+
+# Critical compiled dependencies first
+RUN R -e "install.packages(c('RcppEigen','RSpectra','uwot','hdf5r','RcppAnnoy','FNN'), repos='https://cloud.r-project.org')"
+
+# Seurat ecosystem pinned
+RUN R -e "remotes::install_version('SeuratObject', version='5.4.0', repos='https://cloud.r-project.org', upgrade='never')"
+
+RUN R -e "remotes::install_version('Seurat', version='5.4.0', repos='https://cloud.r-project.org', upgrade='never')"
+
+# Verify Seurat before installing anything else
+RUN R -e "print(.libPaths()); \
+    print(installed.packages()[c('Seurat','SeuratObject'), c('Package','Version')]); \
+    library(SeuratObject); \
+    library(Seurat); \
+    packageVersion('Seurat'); \
+    packageVersion('SeuratObject')"
 
 # CRAN packages - utilities and plotting
 RUN R -e "install.packages(c( \
@@ -68,51 +86,26 @@ RUN R -e "install.packages(c( \
     'plotmics', \
     'pheatmap', \
     'circlize', \
-    'EnhancedVolcano' \
+    'EnhancedVolcano', \
+    'gsl' \
     ), repos='https://cloud.r-project.org')"
 
-# Install Seurat ecosystem with pinned compatible versions
-RUN R -e "install.packages(c( \
-    'Signac', \
-    'harmony', \
-    'hdf5r' \
-    ), repos='https://cloud.r-project.org')"
+# Other Seurat-related packages
+RUN R -e "install.packages(c('Signac','harmony'), repos='https://cloud.r-project.org')"
 
-RUN R -e "remotes::install_version( \
-    'SeuratObject', \
-    version = '5.4.0', \
-    repos = 'https://cloud.r-project.org' \
-    )"
+# GitHub packages
+RUN R -e "remotes::install_github('erocoar/gghalves', upgrade='never')"
 
-RUN R -e "remotes::install_version( \
-    'Seurat', \
-    version = '5.4.0', \
-    repos = 'https://cloud.r-project.org' \
-    )"
+RUN R -e "remotes::install_github('immunogenomics/presto', upgrade='never')"
 
-# Verify Seurat installation
-RUN R -e "library(Seurat); library(SeuratObject); packageVersion('Seurat'); packageVersion('SeuratObject')"
+RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder', upgrade='never')"
 
-# GitHub / fragile packages
-RUN R -e "remotes::install_github('erocoar/gghalves')"
-
-RUN R -e "remotes::install_github('immunogenomics/presto')"
-
-RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
-
-# optional, do not block build
 RUN R -e "tryCatch( \
-    remotes::install_github( \
-    'satijalab/seurat-wrappers', \
-    dependencies = FALSE \
-    ), \
-    error = function(e) message('SeuratWrappers install failed: ', e$message) \
+    remotes::install_github('satijalab/seurat-wrappers', dependencies=FALSE, upgrade='never'), \
+    error=function(e) message('SeuratWrappers install failed: ', e$message) \
     )"
 
-# scRepertoire requirements
-RUN R -e "install.packages('gsl', repos='https://cloud.r-project.org')"
-
-RUN R -e "remotes::install_github('BorchLab/scRepertoire')"
+RUN R -e "remotes::install_github('BorchLab/scRepertoire', upgrade='never')"
 
 # Bioconductor packages
 RUN R -e "BiocManager::install(c( \
@@ -147,38 +140,25 @@ RUN R -e "BiocManager::install(c( \
     'InteractiveComplexHeatmap', \
     'ChIPseeker', \
     'ChIPpeakAnno', \
-    'BiocParallel' \
-    ), ask = FALSE, update = FALSE)"
+    'BiocParallel', \
+    'TFBSTools', \
+    'scDblFinder' \
+    ), ask=FALSE, update=FALSE)"
 
-# xgboost dependency for scDblFinder
+# xgboost, optional for some workflows
 RUN R -e "install.packages('xgboost', repos='https://cloud.r-project.org')"
 
-# scDblFinder
-RUN R -e "BiocManager::install('scDblFinder', ask = FALSE, update = FALSE)"
-
-# Verify scDblFinder installation
-RUN R -e "library(scDblFinder); packageVersion('scDblFinder')"
-
-# TFBSTools
-RUN R -e "BiocManager::install('TFBSTools', ask = FALSE, update = FALSE)"
-
-# Force reinstall/check some important packages
-RUN R -e "install.packages(c( \
-    'tidyverse', \
-    'rlist', \
-    'seqinr', \
-    'spgs' \
-    ), repos='https://cloud.r-project.org')"
-
-RUN R -e "remotes::install_github('immunogenomics/presto')"
-
-RUN R -e "BiocManager::install('miQC', ask = FALSE, update = FALSE)"
-
 # Final compatibility check
-RUN R -e "library(Seurat); \
-    library(SeuratObject); \
+RUN R -e "library(SeuratObject); \
+    library(Seurat); \
+    library(Signac); \
+    library(scDblFinder); \
     stopifnot(as.character(packageVersion('Seurat')) == '5.4.0'); \
-    stopifnot(as.character(packageVersion('SeuratObject')) == '5.4.0')"
+    stopifnot(as.character(packageVersion('SeuratObject')) == '5.4.0'); \
+    packageVersion('Seurat'); \
+    packageVersion('SeuratObject'); \
+    packageVersion('Signac'); \
+    packageVersion('scDblFinder')"
 
 # Create RStudio user
 RUN useradd -m -s /bin/bash rstudio_user && \
