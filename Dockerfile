@@ -73,7 +73,7 @@ RUN R -e "BiocManager::install(c( \
     'BiocGenerics', 'SummarizedExperiment', 'SingleCellExperiment', \
     'GenomicRanges', 'IRanges', 'rtracklayer', 'Biostrings', 'BSgenome', \
     'edgeR', 'limma', 'sva', 'tidybulk', \
-    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', 'miQC', 'singleR', 'celldex' \
+    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', 'miQC', \
     'fgsea', 'enrichplot', 'DOSE', 'clusterProfiler', \
     'org.Hs.eg.db', 'org.Mm.eg.db', \
     'TxDb.Hsapiens.UCSC.hg18.knownGene', \
