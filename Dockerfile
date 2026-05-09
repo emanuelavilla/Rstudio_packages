@@ -52,9 +52,7 @@ RUN R -e "install.packages(c( \
     ), repos='https://cloud.r-project.org')"
 
 # CRAN packages - single-cell ecosystem
-RUN R -e "install.packages(c( \
-    'Seurat', 'SeuratObject', 'Signac', 'harmony', 'hdf5r' \
-    ), repos='https://cloud.r-project.org')"
+RUN R -e "install.packages(c('SeuratObject', 'Seurat', 'Signac', 'harmony', 'hdf5r'), repos='https://cloud.r-project.org')"
 
 # GitHub / fragile packages installed separately
 RUN R -e "remotes::install_github('erocoar/gghalves')"
