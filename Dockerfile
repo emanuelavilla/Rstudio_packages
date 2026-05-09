@@ -10,8 +10,11 @@ RUN apt-get update && \
     libssl-dev \
     libxml2-dev \
     libhdf5-dev \
+    libv8-dev \
     libhdf5-serial-dev \
     hdf5-tools \
+    libsodium-dev \
+    libglpk40 \
     zlib1g-dev \
     gfortran \
     libpng-dev \
@@ -28,6 +31,7 @@ RUN apt-get update && \
     libxt-dev \
     libudunits2-dev \
     libgdal-dev \
+    libboost-dev \
     libgeos-dev \
     libproj-dev \
     libmagick++-dev \
@@ -51,8 +55,15 @@ RUN R -e "install.packages(c( \
     'EnhancedVolcano' \
     ), repos='https://cloud.r-project.org')"
 
-# CRAN packages - single-cell ecosystem
-RUN R -e "install.packages(c('SeuratObject', 'Seurat', 'Signac', 'harmony', 'hdf5r'), repos='https://cloud.r-project.org')"
+# CRAN packages - single-cell ecosystem (Forzando l'ordine e usando R-Universe)
+RUN R -e "setRepositories(ind = 1:3, addURLs = c('https://r-universe.dev')); \
+    install.packages('SeuratObject', repos='https://cloud.r-project.org'); \
+    install.packages('Seurat', repos='https://cloud.r-project.org'); \
+    install.packages(c('Signac', 'harmony', 'hdf5r'), repos='https://cloud.r-project.org')"
+
+# Opzionale: Installa estensioni V5 consigliate (BPCells, presto)
+RUN R -e "setRepositories(ind = 1:3, addURLs = c('https://satijalab.r-universe.dev')); \
+    install.packages(c('BPCells', 'glmGamPoi'))"
 
 # GitHub / fragile packages installed separately
 RUN R -e "remotes::install_github('erocoar/gghalves')"
@@ -60,7 +71,7 @@ RUN R -e "remotes::install_github('immunogenomics/presto')"
 RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
 
 # optional, do not block build
-RUN R -e "tryCatch(remotes::install_github('satijalab/seurat-wrappers', dependencies = FALSE), error = function(e) message('SeuratWrappers install failed: ', e$message))"
+RUN R -e "tryCatch(remotes::install_github('satijalab/seurat-wrappers', dependencies = TRUE), error = function(e) message('SeuratWrappers install failed: ', e$message))"
 
 # scRepertoire requirements
 RUN R -e "install.packages('gsl', repos='https://cloud.r-project.org')"
