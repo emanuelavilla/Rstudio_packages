@@ -55,13 +55,13 @@ RUN R -e "install.packages(c( \
     'EnhancedVolcano' \
     ), repos='https://cloud.r-project.org')"
 
-# CRAN packages - single-cell ecosystem (Forzando l'ordine e usando R-Universe)
+# CRAN packages - single-cell ecosystem
 RUN R -e "setRepositories(ind = 1:3, addURLs = c('https://r-universe.dev')); \
     install.packages('SeuratObject', repos='https://cloud.r-project.org'); \
     install.packages('Seurat', repos='https://cloud.r-project.org'); \
     install.packages(c('Signac', 'harmony', 'hdf5r'), repos='https://cloud.r-project.org')"
 
-# Opzionale: Installa estensioni V5 consigliate (BPCells, presto)
+# Seurat v5 extensions
 RUN R -e "setRepositories(ind = 1:3, addURLs = c('https://satijalab.r-universe.dev')); \
     install.packages(c('BPCells', 'glmGamPoi'))"
 
@@ -70,19 +70,19 @@ RUN R -e "remotes::install_github('erocoar/gghalves')"
 RUN R -e "remotes::install_github('immunogenomics/presto')"
 RUN R -e "remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')"
 
-# optional, do not block build
+# Optional, do not block build
 RUN R -e "tryCatch(remotes::install_github('satijalab/seurat-wrappers', dependencies = TRUE), error = function(e) message('SeuratWrappers install failed: ', e$message))"
 
 # scRepertoire requirements
 RUN R -e "install.packages('gsl', repos='https://cloud.r-project.org')"
 RUN R -e "remotes::install_github('BorchLab/scRepertoire')"
 
-# Bioconductor core + bulk + most single-cell packages
+# Bioconductor core + bulk + single-cell packages
 RUN R -e "BiocManager::install(c( \
     'BiocGenerics', 'SummarizedExperiment', 'SingleCellExperiment', \
     'GenomicRanges', 'IRanges', 'rtracklayer', 'Biostrings', 'BSgenome', \
     'edgeR', 'limma', 'sva', 'tidybulk', \
-    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', 'miQC', \
+    'scran', 'scater', 'slingshot', 'monocle3', 'miloR', 'tricycle', 'miQC', 'MAST', \
     'fgsea', 'enrichplot', 'DOSE', 'clusterProfiler', \
     'org.Hs.eg.db', 'org.Mm.eg.db', \
     'TxDb.Hsapiens.UCSC.hg18.knownGene', \
@@ -96,8 +96,6 @@ RUN R -e "install.packages('xgboost', repos='https://cloud.r-project.org')"
 
 # scDblFinder
 RUN R -e "BiocManager::install('scDblFinder', ask = FALSE, update = FALSE)"
-
-# final check: fail build if missing
 RUN R -e "library(scDblFinder); packageVersion('scDblFinder')"
 
 # TFBSTools separately
@@ -107,6 +105,11 @@ RUN R -e "BiocManager::install('TFBSTools', ask = FALSE, update = FALSE)"
 RUN R -e "install.packages(c('tidyverse', 'rlist', 'seqinr', 'spgs'), repos='https://cloud.r-project.org')"
 RUN R -e "remotes::install_github('immunogenomics/presto')"
 RUN R -e "BiocManager::install('miQC', ask = FALSE, update = FALSE)"
+
+# Final checks
+RUN R -e "library(MAST); packageVersion('MAST')"
+RUN R -e "library(Seurat); packageVersion('Seurat')"
+RUN R -e "library(scDblFinder); packageVersion('scDblFinder')"
 
 # Create RStudio user
 RUN useradd -m -s /bin/bash rstudio_user && \
